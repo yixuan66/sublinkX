@@ -81,14 +81,21 @@ func DecodeSSURL(s string) (Ss, error) {
 	// 解析ss链接
 	param, addr, name := parsingSS(s)
 	// base64解码
-	param = Base64Decode(param)
+	decodedParam, err := Base64Decode(param)
+	if err != nil {
+		return Ss{}, fmt.Errorf("failed to decode base64 param: %v", err)
+	}
+	param = decodedParam
 	// 判断是否为空
 	if param == "" || addr == "" {
 		return Ss{}, fmt.Errorf("invalid SS URL")
 	}
 	// 解析参数
 	parts := strings.Split(addr, ":")
-	port, _ := strconv.Atoi(parts[len(parts)-1])
+	port, err := strconv.Atoi(parts[len(parts)-1])
+	if err != nil {
+		return Ss{}, fmt.Errorf("invalid port in SS URL: %v", err)
+	}
 	server := strings.Replace(ValRetIPv6Addr(addr), ":"+parts[len(parts)-1], "", -1)
 	cipher := strings.Split(param, ":")[0]
 	password := strings.Replace(param, cipher+":", "", 1)
@@ -98,7 +105,7 @@ func DecodeSSURL(s string) (Ss, error) {
 	}
 	// 开发环境输出结果
 	if CheckEnvironment() {
-		fmt.Println("Param:", Base64Decode(param))
+		fmt.Println("Param:", param)
 		fmt.Println("Server", server)
 		fmt.Println("Port", port)
 		fmt.Println("Name:", name)
